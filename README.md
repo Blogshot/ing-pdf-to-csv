@@ -2,9 +2,10 @@
 
 Dieses Programm kann die PDF-Kontoauszüge der ING DE einlesen und in ein maschinenlesbares Format kovertieren, welches wiederum in andere Software eingelesen werden kann. Das Programm iteriert rekursiv durch eine vorgegebene Ordnerstruktur und legt die CSV-Dateien neben den dazugehörigen PDFs ab.
 
-Dazu müssen die Kontoauszüge in einen Ordner abgelegt werden. 
+Dazu müssen die Kontoauszüge in einem Ordner abgelegt werden. Unterordner sind erlaubt, weil das Programm rekursiv arbeitet.
 
 Beispiel:
+```
 ...\Transaktionen
     |-- 2019 
         | -- 1.pdf
@@ -18,9 +19,10 @@ Beispiel:
         | -- 1.pdf
         | -- 2.pdf
         | -- 3.pdf
-        
-Aufruf:
-java -jar '.\ING-PDF2CSV.jar' "C:\Users\dummy\Transaktionen"
+``` 
+
+Aufruf:  
+`java -jar '.\ING-PDF2CSV.jar' "C:\Users\dummy\Transaktionen"`
        
 Andere Projekte sind zwar kompakter geschrieben, enthalten aber nervige Bugs. Dazu zählen:
 * Es werden keine Leerzeichen bei Quell-/Zielkonten berücksichtigt
@@ -28,7 +30,9 @@ Andere Projekte sind zwar kompakter geschrieben, enthalten aber nervige Bugs. Da
 * Nur die erste Zeile von Beschreibungstexten wird eingelesen
 * Sonderfälle wie Kapitalertragsteuer, Abschluss, Solidaritätszuschlag, etc. werden nicht korrekt eingelesen
 
-Dieses Projekt versucht, die PDFs intelligenter zu bearbeiten. So wird ein Beschreibungstext so lange mit Folgezeilen erweitert, bis der Beginn einer neuen Transaktion registriert wird.
+Dieses Projekt vermeidet diese Fehler und bearbeitet die Transaktionen in den PDFs intelligenter. 
+
+So wird ein Beschreibungstext so lange mit Folgezeilen erweitert, bis der Beginn einer neuen Transaktion registriert wird.
 
 ## Abhängigkeiten
 Für dieses Programm muss https://tika.apache.org/ als Bibliothek vorhanden sein.
