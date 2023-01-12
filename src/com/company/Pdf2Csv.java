@@ -9,12 +9,14 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PdfExtractor {
+public class Pdf2Csv {
 
   final static String divider = ";";
   final static String currency = "EUR";
+  final static StringBuilder sbAll = new StringBuilder();
 
   public static void main(String[] arg) {
+    sbAll.append("Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung\n");
     processPDFsRecursively(new File(arg[0]));
   }
 
@@ -35,6 +37,17 @@ public class PdfExtractor {
         processPDF(file);
       }
     }
+
+    FileWriter fw;
+    File all = new File(start.getAbsolutePath() + "\\aggregated.csv");
+    try {
+      fw = new FileWriter(all);
+      fw.write(sbAll.toString());
+      fw.close();
+    } catch (
+        IOException e) {
+      e.printStackTrace();
+    }
   }
 
   private static void processPDF(File file) {
@@ -50,6 +63,8 @@ public class PdfExtractor {
     boolean reachedEnd = false;
 
     StringBuilder sb = new StringBuilder();
+
+    sb.append("Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung\n");
 
     // create array from lines and filtering empty lines
     String[] splitContent = Arrays.stream(content.split("\n")).filter(e -> !e.equals("")).toArray(String[]::new);
@@ -125,6 +140,7 @@ public class PdfExtractor {
             divider + "0,00" + divider + currency + divider + amount + divider + currency;
 
         sb.append(csvline).append("\n");
+        sbAll.append(csvline).append("\n");
       }
 
     }
