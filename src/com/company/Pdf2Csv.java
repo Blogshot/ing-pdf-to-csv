@@ -16,8 +16,22 @@ public class Pdf2Csv {
   final static StringBuilder sbAll = new StringBuilder();
 
   public static void main(String[] arg) {
+
+    File start = new File(arg[0]);
+
     sbAll.append("Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung\n");
-    processPDFsRecursively(new File(arg[0]));
+    processPDFsRecursively(start);
+
+    FileWriter fw;
+    File all = new File(start.getAbsolutePath() + "\\aggregated.csv");
+    try {
+      fw = new FileWriter(all);
+      fw.write(sbAll.toString());
+      fw.close();
+    } catch (
+        IOException e) {
+      e.printStackTrace();
+    }
   }
 
   private static void processPDFsRecursively(File start) {
@@ -36,17 +50,6 @@ public class Pdf2Csv {
       if (file.getName().toLowerCase().endsWith(".pdf")) {
         processPDF(file);
       }
-    }
-
-    FileWriter fw;
-    File all = new File(start.getAbsolutePath() + "\\aggregated.csv");
-    try {
-      fw = new FileWriter(all);
-      fw.write(sbAll.toString());
-      fw.close();
-    } catch (
-        IOException e) {
-      e.printStackTrace();
     }
   }
 
