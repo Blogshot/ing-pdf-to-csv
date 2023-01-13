@@ -5,36 +5,35 @@ import org.apache.tika.Tika;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Pdf2Csv {
 
-  final static String divider = ";";
-  final static String currency = "EUR";
-  final static StringBuilder sbAll = new StringBuilder();
-
   public static void main(String[] arg) {
 
+    StringBuilder sbAll = new StringBuilder("Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung\n");
+
     File start = new File(arg[0]);
+    processPDFsRecursively(start, sbAll);
 
-    sbAll.append("Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung\n");
-    processPDFsRecursively(start);
+    writeToFile(sbAll.toString(), start.getAbsolutePath() + "\\aggregated.csv");
+  }
 
+  private static void writeToFile(String content, String path) {
     FileWriter fw;
-    File all = new File(start.getAbsolutePath() + "\\aggregated.csv");
     try {
-      fw = new FileWriter(all);
-      fw.write(sbAll.toString());
+      fw = new FileWriter(path);
+      fw.write(content);
       fw.close();
-    } catch (
-        IOException e) {
+    } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
-  private static void processPDFsRecursively(File start) {
+  private static void processPDFsRecursively(File start, StringBuilder sbAll) {
 
     File[] files = start.listFiles();
     if (files == null) {
@@ -43,17 +42,22 @@ public class Pdf2Csv {
 
     for (File file : files) {
       if (file.isDirectory()) {
-        processPDFsRecursively(file);
+        processPDFsRecursively(file, sbAll);
         continue;
       }
 
       if (file.getName().toLowerCase().endsWith(".pdf")) {
-        processPDF(file);
+        String result = processPDF(file);
+
+        sbAll.append(result);
+
+        result = "Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung\n" + result;
+        writeToFile(result, file.getAbsolutePath().replace("pdf", "csv"));
       }
     }
   }
 
-  private static void processPDF(File file) {
+  private static String processPDF(File file) {
     System.out.println("Processing " + file.getName());
 
     String content = "";
@@ -64,13 +68,15 @@ public class Pdf2Csv {
     }
 
     boolean reachedEnd = false;
-
     StringBuilder sb = new StringBuilder();
 
-    sb.append("Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung\n");
-
-    // create array from lines and filtering empty lines
+    // filter empty lines from input
     String[] splitContent = Arrays.stream(content.split("\n")).filter(e -> !e.equals("")).toArray(String[]::new);
+    String currency = "";
+
+    Pattern firstLinePattern = Pattern.compile("^(\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d) +(.*) +(.*,\\d\\d)");
+    Pattern secondLinePattern = Pattern.compile("^(\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d) +(.*)");
+    Pattern currencyPattern = Pattern.compile("^.*Betrag \\((\\w\\w\\w)\\)$");
 
     for (int i = 0; i < splitContent.length; i++) {
 
@@ -79,39 +85,41 @@ public class Pdf2Csv {
       }
 
       String line = splitContent[i];
-      String type;
-      String otherAccount;
-      String valuta = "";
-      StringBuilder description = new StringBuilder();
-      Pattern firstLinePattern = Pattern.compile("^(\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d) +(.*) +(.*,\\d\\d)");
+
+      if (currency.equals("")) {
+        Matcher currencyMatcher = currencyPattern.matcher(line);
+
+        if (currencyMatcher.find()) {
+          currency = currencyMatcher.group(1);
+          continue;
+        }
+      }
+
       Matcher firstline = firstLinePattern.matcher(line);
 
       if (firstline.find()) {
         String date = firstline.group(1);
-
-        // some transactions dont have an opposing account
-        String group2 = firstline.group(2).trim();
-        if (group2.contains(" ")) {
-          type = group2.substring(0, group2.indexOf(" "));
-          otherAccount = group2.substring(group2.indexOf(" ") + 1);
-        } else {
-          type = group2;
-          otherAccount = "";
-        }
-
+        String type = firstline.group(2).trim();
         String amount = firstline.group(3);
+        String otherAccount = "";
+        String valuta = "";
+        StringBuilder description = new StringBuilder();
+
+        // most transactions have an opposing account after the first space
+        if (type.contains(" ")) {
+          otherAccount = type.substring(type.indexOf(" ") + 1);
+          type = type.substring(0, type.indexOf(" "));
+        }
 
         // get next line which contains further information about the transaction
         String nextLine = splitContent[i + 1];
-
-        Pattern secondLinePattern = Pattern.compile("^(\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d) +(.*)");
         Matcher secondline = secondLinePattern.matcher(nextLine);
 
         if (secondline.find()) {
           valuta = secondline.group(1);
           description = new StringBuilder(secondline.group(2));
 
-          // descriptions can span several lines, so check further lines
+          // descriptions can span several lines, so check further
           i++;
 
           boolean reachedNextTransaction = firstLinePattern.matcher(nextLine).find();
@@ -132,29 +140,17 @@ public class Pdf2Csv {
               break;
             }
 
-            reachedNextTransaction = firstLinePattern.matcher(nextLine).find();
+            reachedNextTransaction = firstLinePattern.matcher(nextLine).find();  // check if nextLine is new transaction
           }
         }
 
-        String csvline = date + divider + valuta + divider + otherAccount + divider + type + divider + description +
-            divider + "0,00" + divider + currency + divider + amount + divider + currency;
+        String csvline = MessageFormat.format("{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}{0}{7}",
+            ";", date, valuta, otherAccount, type, description, amount, currency);
 
         sb.append(csvline).append("\n");
-        sbAll.append(csvline).append("\n");
       }
-
     }
 
-    System.out.println(sb.toString());
-
-    FileWriter fw;
-    try {
-      fw = new FileWriter(file.getAbsolutePath().replace("pdf", "csv"));
-      fw.write(sb.toString());
-      fw.close();
-    } catch (
-        IOException e) {
-      e.printStackTrace();
-    }
+    return sb.toString();
   }
 }
