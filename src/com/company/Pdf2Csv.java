@@ -7,17 +7,32 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Pdf2Csv {
 
+  private static ExecutorService executor;
+
   public static void main(String[] arg) {
+
+    int numCores = Runtime.getRuntime().availableProcessors();
+    executor = Executors.newFixedThreadPool(numCores); // Create thread pool using all available cores
 
     StringBuilder sbAll = new StringBuilder("Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung\n");
 
     File start = new File(arg[0]);
     processPDFsRecursively(start, sbAll);
+
+    executor.shutdown(); // Wait for all tasks to complete
+    try {
+      executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
 
     writeToFile(sbAll.toString(), start.getAbsolutePath() + "\\aggregated.csv");
   }
@@ -47,12 +62,15 @@ public class Pdf2Csv {
       }
 
       if (file.getName().toLowerCase().endsWith(".pdf")) {
-        String result = processPDF(file);
-
-        sbAll.append(result);
-
-        result = "Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung\n" + result;
-        writeToFile(result, file.getAbsolutePath().replace("pdf", "csv"));
+        // Submit task to thread pool
+        executor.submit(() -> {
+          String result = processPDF(file);
+          synchronized (sbAll) { // Synchronize access to sbAll
+            sbAll.append(result);
+          }
+          result = "Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung\n" + result;
+          writeToFile(result, file.getAbsolutePath().replace("pdf", "csv"));
+        });
       }
     }
   }
@@ -62,6 +80,7 @@ public class Pdf2Csv {
 
     String content = "";
     try {
+      // read PDF as raw text
       content = new Tika().parseToString(file);
     } catch (Exception e) {
       e.printStackTrace();
