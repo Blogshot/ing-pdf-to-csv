@@ -114,28 +114,25 @@ public class Pdf2Csv {
           // descriptions can span several lines, so check further lines
           i++;
 
-          boolean reachedNextTransaction = firstLinePattern.matcher(splitContent[i + 1]).find();
+          boolean reachedNextTransaction = firstLinePattern.matcher(nextLine).find();
           while (!reachedNextTransaction) {
 
-            description.append(splitContent[i + 1]);
+            description.append(nextLine);
             i++;
 
-            // check if there is a next line
-            if (i + 1 == splitContent.length) {
+            nextLine = splitContent[i + 1];
+
+            if (i + 1 == splitContent.length                          // check if there is a next line
+                || nextLine.length() == 1) {                          // skip vertical text on the side of the page
               break;
             }
 
-            // vertical text on the side of the page
-            if (splitContent[i + 1].length() == 1) {
-              break;
-            }
-
-            if (splitContent[i + 1].startsWith("Neuer Saldo")) {
+            if (nextLine.startsWith("Neuer Saldo")) {                 // check if we reached the end
               reachedEnd = true;
               break;
             }
 
-            reachedNextTransaction = firstLinePattern.matcher(splitContent[i + 1]).find();
+            reachedNextTransaction = firstLinePattern.matcher(nextLine).find();
           }
         }
 
