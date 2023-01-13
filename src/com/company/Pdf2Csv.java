@@ -61,8 +61,7 @@ public class Pdf2Csv {
         continue;
       }
 
-      if (file.getName().toLowerCase().endsWith(".pdf")) {
-        // Submit task to thread pool
+      if (file.getName().toLowerCase().endsWith(".pdf")) {  // Submit task to thread pool
         executor.submit(() -> {
           String result = processPDF(file);
           synchronized (sbAll) { // Synchronize access to sbAll
@@ -80,8 +79,7 @@ public class Pdf2Csv {
 
     String content = "";
     try {
-      // read PDF as raw text
-      content = new Tika().parseToString(file);
+      content = new Tika().parseToString(file);   // read PDF as raw text
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -116,7 +114,7 @@ public class Pdf2Csv {
 
       Matcher firstline = firstLinePattern.matcher(line);
 
-      if (firstline.find()) {
+      if (firstline.find()) {     // Only if we come across a "first line", we can check for a second and further
         String date = firstline.group(1);
         String type = firstline.group(2).trim();
         String amount = firstline.group(3);
@@ -124,24 +122,21 @@ public class Pdf2Csv {
         String valuta = "";
         StringBuilder description = new StringBuilder();
 
-        // most transactions have an opposing account after the first space
-        if (type.contains(" ")) {
+        if (type.contains(" ")) {   // most transactions have an opposing account after the first space
           otherAccount = type.substring(type.indexOf(" ") + 1);
           type = type.substring(0, type.indexOf(" "));
         }
 
-        // get next line which contains further information about the transaction
-        String nextLine = splitContent[i + 1];
+        String nextLine = splitContent[i + 1];  // get next line which contains further information about the transaction
         Matcher secondline = secondLinePattern.matcher(nextLine);
 
         if (secondline.find()) {
           valuta = secondline.group(1);
           description = new StringBuilder(secondline.group(2));
 
-          // descriptions can span several lines, so check further
-          i++;
+          i++;  // after storing the second line, progress to the next
 
-          boolean reachedNextTransaction = firstLinePattern.matcher(nextLine).find();
+          boolean reachedNextTransaction = firstLinePattern.matcher(splitContent[i + 1]).find();
           while (!reachedNextTransaction) {
 
             description.append(nextLine);
@@ -165,7 +160,6 @@ public class Pdf2Csv {
 
         String csvline = MessageFormat.format("{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}{0}{7}",
             ";", date, valuta, otherAccount, type, description, amount, currency);
-
         sb.append(csvline).append("\n");
       }
     }
