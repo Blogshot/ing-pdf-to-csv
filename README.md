@@ -1,11 +1,11 @@
 # English
 ### Description
 
-This sofware is able to ingest account statements fron ING DE and convert them to a machine readable CSV format that can be imported into other software. 
+This sofware is able to ingest account statements fron ING DE and convert them to a machine readable CSV format that can be imported into other software, e.g. [FireFly 3](https://github.com/firefly-iii/data-importer). 
 
 It recurses through a given directory structure and creates CSV files alongside the according PDFs.
 
-You will need to place all your PDFs into a single folder. Subfolders are supported. See below for an axample of a valid directory structure.
+You will need to place all your PDFs into a single folder. Subfolders are supported. See below for an example of a valid directory structure.
 
 Example:
 ```
