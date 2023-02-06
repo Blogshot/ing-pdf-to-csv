@@ -22,7 +22,7 @@ public class Pdf2Csv {
     int numCores = Runtime.getRuntime().availableProcessors();
     executor = Executors.newFixedThreadPool(numCores); // Create thread pool using all available cores
 
-    StringBuilder sbAll = new StringBuilder("Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung\n");
+    StringBuilder sbAll = new StringBuilder("Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Betrag;Währung\n");
 
     File start = new File(arg[0]);
     processPDFsRecursively(start, sbAll);
@@ -67,7 +67,7 @@ public class Pdf2Csv {
           synchronized (sbAll) { // Synchronize access to sbAll
             sbAll.append(result);
           }
-          result = "Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung\n" + result;
+          result = "Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Betrag;Währung\n" + result;
           writeToFile(result, file.getAbsolutePath().replace("pdf", "csv"));
         });
       }
