@@ -33,7 +33,7 @@ Other projects are more compact but cointain some bugs that lead me to develop s
 This project avoids these issues and aims to be more intelligent when analyzing the statements.
 
 ### Dependencies
-https://tika.apache.org/ needs to be provided.
+https://tika.apache.org/ needs to be provided. I only got it to work properly by using the precompiled jar file.
 
 # Deutsch
 ### Beschreibung
@@ -68,4 +68,4 @@ Andere Projekte sind zwar kompakter geschrieben, enthalten aber nervige Bugs. Da
 Dieses Projekt vermeidet diese Fehler und bearbeitet die Transaktionen in den PDFs intelligenter. 
 
 ### Abhängigkeiten
-Für dieses Programm muss https://tika.apache.org/ als Bibliothek vorhanden sein.
+Für dieses Programm muss https://tika.apache.org/ als Bibliothek vorhanden sein. In meinem Fall funktionierte es nur, wenn mn die vorkompilierte jar Datei importierte.
